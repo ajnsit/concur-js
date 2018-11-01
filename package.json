@@ -1,0 +1,26 @@
+{
+  "name": "concur-js",
+  "version": "0.1.0",
+  "description": "Concur Javascript Framework",
+  "license": "MIT",
+  "repository": "ajnsit/concur-js",
+  "author": {
+    "name": "Anupam Jain",
+    "email": "ajnsit@gmail.com"
+  },
+  "files": [],
+  "scripts": {
+    "start": "node_modules/.bin/parcel src/index.html",
+    "build": "node_modules/.bin/parcel build src/index.html"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "babel-preset-es2016": "^6.24.1",
+    "parcel-bundler": "^1.9.7"
+  }
+}
