@@ -33,7 +33,7 @@ export const displayView = async function*(view) {
 };
 
 export const emptyView = displayView([]);
-// Maps a function over all values yielded by an Async Generator Function
+// Maps a function over all values yielded by an Async Generator
 export const mapView = (f) => async function* (gen) {
   let val = await gen.next()
   while(!val.done) {
@@ -41,6 +41,11 @@ export const mapView = (f) => async function* (gen) {
     val = await gen.next()
   }
   return val.value;
+};
+
+// Maps a function over the return value of an Async Generator
+export const mapRes = (f) => async function* (gen) {
+  return f(yield* gen);
 };
 
 export const orr = async function* (children) {
@@ -122,3 +127,5 @@ export const forever = async function*(w) {
   yield* w();
   yield* forever(w);
 };
+
+export const range = (start, stop) => Array.from({ length: stop - start }, (_, i) => start + i);
