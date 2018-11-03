@@ -1,37 +1,56 @@
+/** @jsx el */
+
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import 'babel-polyfill';
 
-import {Concur, el, forever, displayView, renderWidget} from './core';
+import {Concur, el, forever, displayView, renderWidget, mapRes, range, orr} from './core';
+import { mapProp } from './props';
 
-//////////////////
-// HELLO CONCUR //
-//////////////////
+const main = forever(async function*(){
+  let isHello;
+  yield* <div>
+    <h1>Concur Javascript Demos</h1>
+    {forever(async function* () {
+      let isHello = yield* <div>
+        <div><button onClick={mapProp(_ => true)}>Hello World</button></div>
+        <div><button onClick={mapProp(_ => false)}>Huge Button List</button></div>
+      </div>
+      if(isHello) {
+        yield* <div>
+          {helloWorld}
+          <hr />
+          <button onClick>BACK TO MAIN MENU</button>
+        </div>
+      } else {
+        yield* <div>
+          {hugeButtonListDemo(10000)}
+          <hr />
+          <button onClick>BACK TO MAIN MENU</button>
+        </div>
+      }
+    })}
+  </div>
+});
 
-// Generic Button component
-let button = async function* (label) {
-  let resolve;
-  let p = new Promise(function(resolveFn) {resolve = resolveFn;});
-  yield [<button onClick={() => resolve()}>{label}</button>];
-  return await p;
-};
+const helloWorld = forever(async function*() {
+  yield* <button onClick>Click me</button>
+  yield* <div>
+    <span>Hello Concur!</span>
+    <button onClick>Restart?</button>
+  </div>
+});
 
-// Create a new widget
-const HelloWorld =
-  el("div",
-    [ displayView(<h1>Concur JS Hello World</h1>)
-    , forever(async function* () {
-        yield* button("Click me");
-        yield* el("div",
-          [ displayView("Hello Concur!")
-          , button("Restart?")
-          ]);
-      })
-  ]);
+const hugeButtonListDemo = (num) => forever(async function*() {
+  let arr = range(0,num);
+  yield* <button onClick>{"Show a list of " + num + " buttons"}</button>
+  let n = yield* <div>
+    {arr.map(n => <button onClick={mapProp(_ => n)}>{n}</button>)}
+  </div>
+  yield* <div>
+    {"You clicked button#" + n}
+    <button onClick>Restart?</button>
+  </div>
+});
 
-// You can directly render a widget using `renderWidget`.
-renderWidget(HelloWorld)('root');
-
-// Or you can also convert a widget to a React element by wrapping it in <Concur></Concur> tags
-// (It needs to be wrapped inside a function due to technical limitations).
-ReactDOM.render(<Concur>{() => HelloWorld}</Concur>, document.getElementById('root'));
+renderWidget(main)('root');

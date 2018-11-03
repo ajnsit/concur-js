@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import 'babel-polyfill';
 
-import elFn from './elFn';
+import {mkProps} from './props'
 
 ////////////
 // CONCUR //
@@ -48,7 +48,30 @@ export const mapRes = (f) => async function* (gen) {
   return f(yield* gen);
 };
 
+// Internal utility
+function isPrimitiveChild(x) {
+  return typeof x === 'string' || typeof x === 'number';
+}
+
 export const orr = async function* (children) {
+
+  // Special case for some non-array children
+  if(typeof children === 'string' || typeof children === 'number') {
+    return (yield* displayView(children));
+  }
+
+  // Type checking on the view
+  if(!Array.isArray(children)) {
+    return (yield* emptyView);
+  }
+    
+  // Convert primitive children to display views
+  children = children.map(x => {
+    if(isPrimitiveChild(x)) {
+      return displayView(x);
+    }
+    return x;
+  });
 
   // If only 0 or 1 child, then no need to merge
   if(!children.length) {
@@ -96,14 +119,29 @@ const dischargeView = (handleView, view) => {
 // REACT //
 ///////////
 
-export const el = elFn(React.Fragment, function(componentOrTag, properties, children) {
-  return mapView(v => React.createElement(componentOrTag, properties, v))(orr(children));
-});
+const reactCreateElement = (t, p) => (c) => React.createElement.apply(React, [t, p].concat(c));
+
+export const el = function(componentOrTag, properties, ...children) {
+  const [p,props] = mkProps(properties);
+  if(children.length) {
+    // Sometimes you can get arbitrarily nested children
+    children = Array.concat.apply([], children.map(child => {
+      if(Array.isArray(child)) {
+        return child;
+      } else {
+        return [child];
+      }
+    }));
+  }
+  const child = orr(children);
+  const ret = orr([p,mapView(reactCreateElement(componentOrTag, props))(child)]);
+  return ret;
+};
 
 export class Concur extends Component {
   constructor(props) {
     super(props);
-    this.widget = props.children(); // nameFormExample(); // props.children;
+    this.widget = props.children();
     this.state = {view: <div>LOADING...</div>};
   }
   componentDidMount() {
@@ -116,7 +154,7 @@ export class Concur extends Component {
 }
 
 export const renderWidget = (w) => (root) => {
-  ReactDOM.render(<Concur>{()=>w}</Concur>, document.getElementById(root));
+  ReactDOM.render(<Concur>{function() {return w;}}</Concur>, document.getElementById(root));
 }
 
 //////////////////
@@ -129,3 +167,4 @@ export const forever = async function*(w) {
 };
 
 export const range = (start, stop) => Array.from({ length: stop - start }, (_, i) => start + i);
+
