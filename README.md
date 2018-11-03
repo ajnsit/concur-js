@@ -2,33 +2,24 @@
 
 Concur is a Javascript UI Framework based on Async Generators.
 
-It is a port to Javascript of the [Concur for Haskell](https://github.com/ajnsit/concur) and [Concur for Purescript](https://github.com/ajnsit/purescript-concur), and is the first version of Concur for an imperative language.
+It is a port to Javascript of [Concur for Haskell](https://github.com/ajnsit/concur) and [Concur for Purescript](https://github.com/ajnsit/purescript-concur), and is the first version of Concur for an imperative language.
 
 An introduction to Concur concepts can be found in the [Documentation for the Haskell/Purescript versions](https://github.com/ajnsit/concur-documentation/blob/master/README.md). This obviously uses Haskell/Purescript syntax, but many of the concepts will apply to the JS version.
 
 ## Hello World Example
 
 ```javascript
-// Generic Button component
-let button = async function* (label) {
-  let resolve;
-  let p = new Promise(function(resolveFn) {resolve = resolveFn;});
-  yield [<button onClick={() => resolve()}>{label}</button>];
-  return await p;
-};
-
 // Create a new widget
-const HelloWorld =
-  el("div",
-    [ displayView(<h1>Concur JS Hello World</h1>)
-    , forever(async function* () {
-        yield* button("Click me");
-        yield* el("div",
-          [ displayView("Hello Concur!")
-          , button("Restart?")
-          ]);
-      })
-  ]);
+const HelloWorld = <div>
+  <h1>Concur JS Hello World</h1>
+  {forever(async function*() {
+    yield* <button onClick>Click me</button>
+    yield* <div>
+      <span>Hello Concur!</span>
+      <button onClick>Restart?</button>
+    </div>
+  })}
+</div>
 
 // You can directly render a widget using `renderWidget`.
 renderWidget(HelloWorld)('root');
