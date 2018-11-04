@@ -18,7 +18,7 @@ const main = forever(async function*(){
       </div>
       if(isHello) {
         yield* <div>
-          {helloWorld}
+          {helloWorld()}
           <hr />
           <button onClick>BACK TO MAIN MENU</button>
         </div>
@@ -33,13 +33,15 @@ const main = forever(async function*(){
   </div>
 });
 
-const helloWorld = forever(async function*() {
-  yield* <button onClick>Click me</button>
-  yield* <div>
-    <span>Hello Concur!</span>
-    <button onClick>Restart?</button>
-  </div>
-});
+// This must be a function, instead of a straight generator
+// Else once it finishes, it will not run
+const helloWorld = () => forever(async function*() {
+    yield* <button onClick>Click me</button>
+    yield* <div>
+      <span>Hello Concur!</span>
+      <button onClick>Restart?</button>
+    </div>
+  });
 
 const hugeButtonListDemo = (num) => forever(async function*() {
   let arr = range(0,num);

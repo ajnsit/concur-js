@@ -32,7 +32,8 @@ export const displayView = async function*(view) {
   return (await __internal_never_ending_promise__);
 };
 
-export const emptyView = displayView([]);
+export const emptyView = () => displayView([]);
+
 // Maps a function over all values yielded by an Async Generator
 export const mapView = (f) => async function* (gen) {
   let val = await gen.next()
@@ -62,7 +63,7 @@ export const orr = async function* (children) {
 
   // Type checking on the view
   if(!Array.isArray(children)) {
-    return (yield* emptyView);
+    return (yield* emptyView());
   }
     
   // Convert primitive children to display views
@@ -75,7 +76,7 @@ export const orr = async function* (children) {
 
   // If only 0 or 1 child, then no need to merge
   if(!children.length) {
-    return (yield* emptyView);
+    return (yield* emptyView());
   }
   if(children.length === 1) {
     return (yield* children[0]);
