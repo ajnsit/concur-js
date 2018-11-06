@@ -158,14 +158,43 @@ export const renderWidget = (w) => (root) => {
   ReactDOM.render(<Concur>{function() {return w;}}</Concur>, document.getElementById(root));
 }
 
+export const withResolver = async function*(axn) {
+  yield [];
+  let resolveFn;
+  const p = new Promise(resolve => { resolveFn = resolve });
+  axn(resolveFn);
+  return p;
+};
+
 //////////////////
 // CONTROL FLOW //
 //////////////////
 
 export const forever = async function*(w) {
-  yield* w();
-  yield* forever(w);
+  // Avoid stack overflow
+  while(true) {
+    yield* w();
+  }
 };
 
+// Useful array constructor
 export const range = (start, stop) => Array.from({ length: stop - start }, (_, i) => start + i);
 
+// Monad fix for JS
+// mfix :: ((() -> a) -> (() -> a)) -> () -> a
+export const mfix = (f) => {
+  return () => {
+    let ready = false;
+    let result = f(() => {
+      if (!ready) throw new Error(message);
+      return result;
+    })();
+    ready = true;
+    return result;
+  };
+};
+
+// DELME - PRIMITIVE TIMEOUT VIEW
+export const Timeout = (ms) => {
+  return withResolver(r => setTimeout(r, ms));
+}
