@@ -1,11 +1,11 @@
-class Fn {
-  constructor(fn) {
-    this.fn = fn;
+class Quote {
+  constructor(v) {
+    this.v = v;
   }
 }
 
-export const mapProp = (f) => {
-  return new Fn(f);
+export const q = (v) => {
+  return new Quote(v);
 };
 
 export const mkProps = (properties) => {
@@ -15,16 +15,15 @@ export const mkProps = (properties) => {
   if(!properties) return [propResolve, properties];
   Object.keys(properties).forEach(k => {
     let v = properties[k];
-    let f;
-    if(v instanceof Fn) {
-      f = v.fn;
-    } else if(v === true) {
-      f = x => x;
-    } else {
-      return;
-    }
-    if(handlerNames.includes(k)) {
-      properties[k] = function(res) { resolve(f(res)); };
+    if(v instanceof Quote) {
+      // Unwrap quotes
+      properties[k] = v.v;
+    } else if(handlerNames.includes(k)) {
+      if(v === true) {
+        properties[k] = function(res) { resolve(res); };
+      } else if(typeof v === 'function') {
+        properties[k] = function(res) { resolve(v(res)); };
+      }
     }
   });
   return [propResolve, properties];
