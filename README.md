@@ -4,13 +4,15 @@ Concur is a Javascript UI Framework based on Async Generators.
 
 It is a port to Javascript of [Concur for Haskell](https://github.com/ajnsit/concur) and [Concur for Purescript](https://github.com/ajnsit/purescript-concur), and is the first version of Concur for an imperative language.
 
+
 ## The Elevator Pitch
 
 Concur can be thought of as a layer on top of React components. It helps you get rid of unprincipled event handlers and mutable state, and lets you build structured and composable abstractions. The primary mechanism for this is composition of components **in time**™.
 
-To learn more, continue to the [Quick Introduction](/#user-content-quick-introduction) section below.
+To learn more, continue to the [Quick Introduction](#quick-introduction) section below.
 
 A discussion of Concur concepts can also be found in the [Documentation for the Haskell/Purescript versions](https://github.com/ajnsit/concur-documentation/blob/master/README.md). This obviously uses Haskell/Purescript syntax and semantics, but many of the concepts will apply to the JS version.
+
 
 ## Sample Concur Component
 
@@ -36,6 +38,7 @@ ReactDOM.render(<Concur>{() => HelloWorld}</Concur>, document.getElementById('ro
 
 You can see this example run here - https://ajnsit.github.io/concur-js/.
 
+
 ## Usage
 
 ### Clone repo
@@ -53,7 +56,9 @@ You can see this example run here - https://ajnsit.github.io/concur-js/.
 > yarn build
 
 
+
 ## Quick Introduction
+
 
 ### Hello World
 
