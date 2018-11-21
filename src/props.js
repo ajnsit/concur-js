@@ -12,13 +12,15 @@ export const mkProps = (properties) => {
   let resolve;
   let p = new Promise(function(resolveFn) {resolve = resolveFn;});
   let propResolve = (async function*() { yield []; return await p;})();
-  if(!properties) return [propResolve, properties];
+  if(!properties) return [propResolve, properties, true];
+  let isSimpleProps = true;
   Object.keys(properties).forEach(k => {
     let v = properties[k];
     if(v instanceof Quote) {
       // Unwrap quotes
       properties[k] = v.v;
     } else if(handlerNames.includes(k)) {
+      isSimpleProps = false;
       if(v === true) {
         properties[k] = function(res) { resolve(res); };
       } else if(typeof v === 'function') {
@@ -26,7 +28,7 @@ export const mkProps = (properties) => {
       }
     }
   });
-  return [propResolve, properties];
+  return [propResolve, properties, isSimpleProps];
 };
 
 const handlerNames = [

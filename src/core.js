@@ -54,6 +54,10 @@ function isPrimitiveChild(x) {
   return typeof x === 'string' || typeof x === 'number';
 }
 
+export function isPrimitiveReact(x) {
+  return isPrimitiveChild(x) || React.isValidElement(x);
+}
+
 export const orr = async function* (children) {
 
   // Special case for some non-array children
@@ -68,7 +72,7 @@ export const orr = async function* (children) {
     
   // Convert primitive children to display views
   children = children.map(x => {
-    if(isPrimitiveChild(x)) {
+    if(isPrimitiveReact(x)) {
       return displayView(x);
     }
     return x;
@@ -123,7 +127,7 @@ const dischargeView = (handleView, view) => {
 const reactCreateElement = (t, p) => (c) => React.createElement.apply(React, [t, p].concat(c));
 
 export const el = function(componentOrTag, properties, ...children) {
-  const [p,props] = mkProps(properties);
+  let simpleChildren = false;
   if(children.length) {
     // Sometimes you can get arbitrarily nested children
     children = Array.concat.apply([], children.map(child => {
@@ -133,6 +137,13 @@ export const el = function(componentOrTag, properties, ...children) {
         return [child];
       }
     }));
+    simpleChildren = children.every(isPrimitiveReact);
+  } else {
+    simpleChildren = true;
+  }
+  const [p,props,simpleProps] = mkProps(properties);
+  if(simpleChildren && simpleProps) {
+    return reactCreateElement(componentOrTag, props)(children);
   }
   const child = orr(children);
   const ret = orr([p,mapView(reactCreateElement(componentOrTag, props))(child)]);
@@ -155,7 +166,11 @@ export class Concur extends Component {
 }
 
 export const renderWidget = (w) => (root) => {
-  ReactDOM.render(<Concur>{function() {return w;}}</Concur>, document.getElementById(root));
+  let elem = w;
+  if(!isPrimitiveReact(w)) {
+    elem = <Concur>{function() {return w;}}</Concur>
+  }
+  ReactDOM.render(elem, document.getElementById(root));
 }
 
 export const withResolver = async function*(axn) {
