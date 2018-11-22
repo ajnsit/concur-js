@@ -1,13 +1,3 @@
-class Quote {
-  constructor(v) {
-    this.v = v;
-  }
-}
-
-export const q = (v) => {
-  return new Quote(v);
-};
-
 export const mkProps = (properties) => {
   let resolve;
   let p = new Promise(function(resolveFn) {resolve = resolveFn;});
@@ -15,16 +5,24 @@ export const mkProps = (properties) => {
   if(!properties) return [propResolve, properties, true];
   let isSimpleProps = true;
   Object.keys(properties).forEach(k => {
-    let v = properties[k];
-    if(v instanceof Quote) {
-      // Unwrap quotes
-      properties[k] = v.v;
-    } else if(handlerNames.includes(k)) {
+    if(handlerNamesMap.has(k)) {
       isSimpleProps = false;
+      const v = properties[k];
+      delete properties[k];
+      const evtName = handlerNamesMap.get(k);
+      // What should we do if we are overwriting an existing handler?
+      if(properties.hasOwnProperty(evtName)) {
+        // console.warn(`Existing event handler "${evtName}" overridden by Concur event handler`);
+      }
       if(v === true) {
-        properties[k] = function(res) { resolve(res); };
+        // No value was provided
+        properties[evtName] = function(res) { resolve(res); };
       } else if(typeof v === 'function') {
-        properties[k] = function(res) { resolve(v(res)); };
+        // Value is a mapper function
+        properties[evtName] = function(res) { resolve(v(res)); };
+      } else {
+        // Value is a constant
+        properties[evtName] = function() { resolve(v); };
       }
     }
   });
@@ -172,3 +170,5 @@ const handlerNames = [
   "onScrollCapture",
   "onWheelCapture"
 ];
+
+const handlerNamesMap = new Map(handlerNames.map(h => ['c'+h, h]));
