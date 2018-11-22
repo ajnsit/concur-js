@@ -21,28 +21,71 @@ import {mkProps} from './props'
 //     return (ret + 1);
 //   }
 
+export class MappedGen {
+  constructor(genFunc, mapView, mapRes) {
+    this.gen = genFunc();
+    this.mapViewArr = mapView? [mapView] : [];
+    this.mapResArr = mapRes? [mapRes] : [];
+    // if(!this.gen.next) {
+    //   this.res = this.mapViewArr.reduce((v,f) => f(v), this.gen)
+    // }
+  }
+  mapView(f) {
+    this.mapViewArr.push(f);
+  }
+  mapRes(f) {
+    this.mapResArr.push(f);
+  }
+  async next(v) {
+    // if(this.res) {
+    //   return {value: this.res, done: false};
+    // }
+    const val = await this.gen.next()
+    const mapper = val.done? this.mapResArr : this.mapViewArr;
+    val.value = mapper.reduce((v,f) => f(v), val.value)
+    return val;
+  }
+  [Symbol.iterator]() {
+    return this
+  }
+}
+
+// Shorthand
+export function w(gen, mapView, mapRes) {
+  return new MappedGen(gen, mapView, mapRes);
+}
+
 // HACKY. There must be a better way.
 // An internal promise that never resolves.
 // Can be used for never ending async functions.
 const __internal_never_ending_promise__ = new Promise(function() {});
 
 // Display only view
-export const displayView = async function*(view) {
+// AJ: TODO: Why can't I wrap this in MappedGen?
+export const displayView = (view) => (async function*() {
   yield view;
   return (await __internal_never_ending_promise__);
-};
+})();
 
 export const emptyView = () => displayView([]);
 
 // Maps a function over all values yielded by an Async Generator
-export const mapView = (f) => async function* (gen) {
-  let val = await gen.next()
-  while(!val.done) {
-    yield(f(val.value))
-    val = await gen.next()
+export const mapView = (f) => (gen) => {
+  if(gen instanceof MappedGen) {
+    return gen.mapView(f);
   }
-  return val.value;
-};
+  if(isPrimitiveReact(gen)) {
+    return f(gen);
+  }
+  return w(async function* () {
+    let val = await gen.next()
+    while(!val.done) {
+      yield(f(val.value))
+      val = await gen.next()
+    }
+    return val.value;
+  });
+}
 
 // Maps a function over the return value of an Async Generator
 export const mapRes = (f) => async function* (gen) {
@@ -58,19 +101,25 @@ export function isPrimitiveReact(x) {
   return isPrimitiveChild(x) || React.isValidElement(x);
 }
 
-export const orr = async function* (children) {
-
+export const orr = (children) => {
   // Special case for some non-array children
-  if(typeof children === 'string' || typeof children === 'number') {
-    return (yield* displayView(children));
+  if(isPrimitiveReact(children)) {
+    return children;
   }
 
-  // Type checking on the view
+  // Type checking the view
   if(!Array.isArray(children)) {
-    return (yield* emptyView());
+    return emptyView();
   }
-    
-  // Convert primitive children to display views
+
+  // Are all children primitives? Use a fragment.
+  if(children.map(isPrimitiveReact).reduce((x,y) => x && y, true)) {
+    return React.createElement(React.Fragment, null, children);
+  }
+  
+  // If it's a mix of primitive and non-primitive,
+  // convert primitive children to trivial generators
+  // so that we can handle all children generically later
   children = children.map(x => {
     if(isPrimitiveReact(x)) {
       return displayView(x);
@@ -80,32 +129,35 @@ export const orr = async function* (children) {
 
   // If only 0 or 1 child, then no need to merge
   if(!children.length) {
-    return (yield* emptyView());
+    return emptyView();
   }
+
   if(children.length === 1) {
-    return (yield* children[0]);
+    return children[0];
   }
 
-  // Need to get the initial views from all the children
-  let nextChildViewPromises = children.map(view => view.next());
-  let nextChildViews = await Promise.all(nextChildViewPromises)
-  let dones = nextChildViews.filter(x => x.done);
-  if(dones.length) {
-    return dones[0].value;
-  }
-  nextChildViewPromises = children.map((view, idx) => view.next().then(v => [idx,v]));
-
-  // Step loop
-  while(true) {
-    yield nextChildViews.reduce((x,y) => x.concat(y.value), []);
-    let [idx, v] = await Promise.race(nextChildViewPromises);
-    if(v.done) {
-      return v.value;
+  return (async function* () {
+    // Need to get the initial views from all the children
+    let nextChildViewPromises = children.map(view => view.next());
+    let nextChildViews = await Promise.all(nextChildViewPromises)
+    let dones = nextChildViews.filter(x => x.done);
+    if(dones.length) {
+      return dones[0].value;
     }
-    nextChildViews[idx] = v;
-    nextChildViewPromises[idx] = children[idx].next().then(v => [idx,v])
-  }
-};
+    nextChildViewPromises = children.map((view, idx) => view.next().then(v => [idx,v]));
+
+    // Step loop
+    while(true) {
+      yield nextChildViews.reduce((x,y) => x.concat(y.value), []);
+      let [idx, v] = await Promise.race(nextChildViewPromises);
+      if(v.done) {
+        return v.value;
+      }
+      nextChildViews[idx] = v;
+      nextChildViewPromises[idx] = children[idx].next().then(v => [idx,v])
+    }
+  })();
+}
 
 const dischargeView = (handleView, view) => {
   if(view && view.next && typeof view.next === 'function') {

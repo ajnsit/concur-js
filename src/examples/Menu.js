@@ -1,7 +1,7 @@
 /** @jsx el */
 
 import 'babel-polyfill';
-import {el, forever, renderWidget, range} from '../core';
+import {el, forever, w, range} from '../core';
 
 // This must be a function, instead of a straight generator
 // Else once it finishes, it will not run
@@ -17,7 +17,7 @@ const hugeButtonListDemo = (num) => forever(async function*() {
   let arr = range(0,num);
   yield* <button conClick>{"Show a list of " + num + " buttons"}</button>
   let n = yield* <div>
-    {arr.map(n => <button conClick={_ => n}>{n}</button>)}
+    {arr.map(n => <button conClick={n}>{n}</button>)}
   </div>
   yield* <div>
     {"You clicked button#" + n}
