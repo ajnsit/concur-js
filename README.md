@@ -4,6 +4,8 @@ Concur is a Javascript UI Framework based on Async Generators.
 
 It is a port to Javascript of [Concur for Haskell](https://github.com/ajnsit/concur) and [Concur for Purescript](https://github.com/ajnsit/purescript-concur), and is the first version of Concur for an imperative language.
 
+The newest imperative language to be supported in Python, via [Concur for Python](https://github.com/potocpav/python-concur) which uses ImgUI for graphics. Created and Maintained by [potocpav](https://github.com/potocpav).
+
 
 ## The Elevator Pitch
 
