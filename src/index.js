@@ -1,5 +1,4 @@
-import {el, forever, renderWidget, range} from './core';
+import {renderWidget} from './core';
 import {menuExample} from './examples/Menu';
 
 renderWidget(menuExample)('root');
-
